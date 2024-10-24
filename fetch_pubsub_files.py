@@ -2,7 +2,7 @@ import os
 import json
 import time
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from concurrent.futures import TimeoutError
 from google.cloud import storage, pubsub_v1
 
@@ -26,7 +26,7 @@ def setup_logger():
     tmp_dir = os.path.expanduser("~/tmp")
     os.makedirs(tmp_dir, exist_ok=True)
 
-    timestamp = datetime.utcnow().strftime('%Y%m%d-%H%M%S')
+    timestamp = datetime.now(tz=timezone.utc).strftime('%Y%m%d-%H%M%S')
     log_filename = f"gcs-fetcher-{timestamp}.log"
     log_path = os.path.join(tmp_dir, log_filename)
 
