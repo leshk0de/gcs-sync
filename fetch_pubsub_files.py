@@ -63,11 +63,17 @@ def download_file(bucket_name, blob_name, destination_path, storage_client, logg
     """Download a specific file from GCS."""
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(blob_name)
-    destination_file = os.path.join(destination_path, blob_name)
 
-    os.makedirs(os.path.dirname(destination_file), exist_ok=True)
+    # Extract only the file name, ignoring any folder structure in GCS
+    file_name = os.path.basename(blob_name)
+    destination_file = os.path.join(destination_path, file_name)
+
+    # Ensure the destination directory exists
+    os.makedirs(destination_path, exist_ok=True)
+
     logger.info(f"Downloading {blob_name} to {destination_file}")
     blob.download_to_filename(destination_file)
+
 
 def handle_message(message, storage_client, config, logger, files_fetched):
     """Handle a single Pub/Sub message."""
