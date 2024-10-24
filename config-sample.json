@@ -1,0 +1,7 @@
+{
+    "gcs_bucket_name": "your-bucket-name",
+    "destination_path": "./downloaded_files",  
+    "service_account_path": "service-account-key.json",
+    "pubsub_subscription": "projects/your-project/subscriptions/your-subscription"
+}
+  
