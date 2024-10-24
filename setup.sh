@@ -4,7 +4,7 @@
 CRON_INTERVAL="${1:-5}"  # Default interval is 5 minutes if not provided
 SCRIPT_PATH="$(realpath fetch_pubsub_files.py)"  # Absolute path to the Python script
 LOG_DIR="$(realpath "$(dirname "$SCRIPT_PATH")/../logs")"  # Absolute path to logs directory
-LOG_PATH="$LOG_DIR/gcs-sync.log"
+LOG_PATH="$LOG_DIR/cronjob-gcs-sync.log"
 REQUIREMENTS_FILE="requirements.txt"
 VENV_DIR="$(dirname "$SCRIPT_PATH")/.venv"  # Virtual environment directory
 
