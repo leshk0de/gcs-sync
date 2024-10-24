@@ -7,11 +7,12 @@ from concurrent.futures import TimeoutError
 from google.cloud import storage, pubsub_v1
 
 def load_config(config_file='config.json'):
-    """Load configuration from the specified JSON file."""
-    with open(config_file, 'r') as f:
-        return json.load(f)
+    """Load configuration from the same directory as the script."""
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    config_path = os.path.join(script_dir, config_file)
 
-from google.cloud import storage, pubsub_v1
+    with open(config_path, 'r') as f:
+        return json.load(f)
 
 def initialize_clients(service_account_path):
     """Initialize the GCS and Pub/Sub clients using the provided service account key."""
@@ -19,12 +20,15 @@ def initialize_clients(service_account_path):
     pubsub_client = pubsub_v1.SubscriberClient.from_service_account_file(service_account_path)
     return storage_client, pubsub_client
 
-
 def setup_logger():
     """Set up logging to both stdout and a log file."""
+    # Ensure the ~/tmp directory exists
+    tmp_dir = os.path.expanduser("~/tmp")
+    os.makedirs(tmp_dir, exist_ok=True)
+
     timestamp = datetime.utcnow().strftime('%Y%m%d-%H%M%S')
     log_filename = f"gcs-fetcher-{timestamp}.log"
-    log_path = os.path.join("/tmp", log_filename)
+    log_path = os.path.join(tmp_dir, log_filename)
 
     # Create logger
     logger = logging.getLogger("gcs_fetcher")
@@ -52,7 +56,7 @@ def upload_log_to_gcs(log_path, bucket_name, storage_client, logger):
     log_blob_name = f"logs/gcs-fetcher-script/{os.path.basename(log_path)}"
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(log_blob_name)
-    
+
     logger.info(f"Uploading log file {log_path} to GCS at {log_blob_name}")
     blob.upload_from_filename(log_path)
     logger.info(f"Log file {log_path} successfully uploaded.")
@@ -62,7 +66,7 @@ def download_file(bucket_name, blob_name, destination_path, storage_client, logg
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(blob_name)
     destination_file = os.path.join(destination_path, blob_name)
-    
+
     os.makedirs(os.path.dirname(destination_file), exist_ok=True)
     logger.info(f"Downloading {blob_name} to {destination_file}")
     blob.download_to_filename(destination_file)
