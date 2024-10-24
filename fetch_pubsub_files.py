@@ -11,11 +11,14 @@ def load_config(config_file='config.json'):
     with open(config_file, 'r') as f:
         return json.load(f)
 
+from google.cloud import storage, pubsub_v1
+
 def initialize_clients(service_account_path):
-    """Initialize the GCS and Pub/Sub clients."""
+    """Initialize the GCS and Pub/Sub clients using the provided service account key."""
     storage_client = storage.Client.from_service_account_json(service_account_path)
-    pubsub_client = pubsub_v1.SubscriberClient()
+    pubsub_client = pubsub_v1.SubscriberClient.from_service_account_file(service_account_path)
     return storage_client, pubsub_client
+
 
 def setup_logger():
     """Set up logging to both stdout and a log file."""
