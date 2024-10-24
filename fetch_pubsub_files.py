@@ -1,6 +1,5 @@
 import os
 import json
-import time
 import logging
 from datetime import datetime, timezone
 from concurrent.futures import TimeoutError
@@ -22,7 +21,6 @@ def initialize_clients(service_account_path):
 
 def setup_logger():
     """Set up logging to both stdout and a log file."""
-    # Ensure the ~/tmp directory exists
     tmp_dir = os.path.expanduser("~/tmp")
     os.makedirs(tmp_dir, exist_ok=True)
 
@@ -71,21 +69,24 @@ def download_file(bucket_name, blob_name, destination_path, storage_client, logg
     logger.info(f"Downloading {blob_name} to {destination_file}")
     blob.download_to_filename(destination_file)
 
-def handle_message(message, storage_client, config, logger):
+def handle_message(message, storage_client, config, logger, files_fetched):
     """Handle a single Pub/Sub message."""
     try:
         data = json.loads(message.data.decode('utf-8'))
         file_name = data.get('name')  # File name in GCS
         if file_name:
             download_file(config['gcs_bucket_name'], file_name, config['destination_path'], storage_client, logger)
+            files_fetched.append(file_name)  # Track downloaded files
     except Exception as e:
         logger.error(f"Failed to handle message: {e}")
     message.ack()
 
 def fetch_messages(pubsub_client, subscription, timeout, storage_client, config, logger):
     """Listen for Pub/Sub messages and handle them."""
+    files_fetched = []  # Track whether any files were fetched
+
     def callback(message):
-        handle_message(message, storage_client, config, logger)
+        handle_message(message, storage_client, config, logger, files_fetched)
 
     future = pubsub_client.subscribe(subscription, callback=callback)
     logger.info(f"Listening for messages on {subscription} for {timeout} seconds...")
@@ -96,6 +97,8 @@ def fetch_messages(pubsub_client, subscription, timeout, storage_client, config,
         logger.info("Stopped listening after timeout.")
         future.cancel()
 
+    return files_fetched  # Return the list of fetched files
+
 if __name__ == "__main__":
     # Load configuration
     config = load_config()
@@ -105,7 +108,7 @@ if __name__ == "__main__":
     logger, log_path = setup_logger()
 
     # Fetch and process messages for 15 seconds
-    fetch_messages(
+    files_fetched = fetch_messages(
         pubsub_client=pubsub_client,
         subscription=config['pubsub_subscription'],
         timeout=15,
@@ -114,5 +117,9 @@ if __name__ == "__main__":
         logger=logger
     )
 
-    # Upload the log file to GCS
-    upload_log_to_gcs(log_path, config['gcs_bucket_name'], storage_client, logger)
+    # Upload the log file to GCS only if any files were fetched
+    if files_fetched:
+        logger.info(f"Fetched {len(files_fetched)} files. Uploading log to GCS...")
+        upload_log_to_gcs(log_path, config['gcs_bucket_name'], storage_client, logger)
+    else:
+        logger.info("No files fetched. Skipping log upload.")
