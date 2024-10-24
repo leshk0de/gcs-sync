@@ -28,7 +28,6 @@ fi
 
 # Step 3: Activate the virtual environment and upgrade pip, setuptools, and wheel
 echo "Activating the virtual environment..."
-# Use "." instead of "source" for compatibility with sh
 . "$VENV_DIR/bin/activate"
 
 echo "Updating pip, setuptools, and wheel..."
@@ -68,3 +67,7 @@ echo "Virtual environment path: $VENV_DIR"
 echo "Log directory path: $LOG_DIR"
 echo "Log file path: $LOG_PATH"
 echo "Your GCS sync script is now scheduled to run every $CRON_INTERVAL minutes."
+
+# Print the current cron jobs for verification
+echo "Current cron jobs for user $(whoami):"
+crontab -l
