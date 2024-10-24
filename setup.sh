@@ -9,7 +9,7 @@ REQUIREMENTS_FILE="requirements.txt"
 VENV_DIR="$(dirname "$SCRIPT_PATH")/.venv"  # Virtual environment directory
 
 # Ensure the script is not run as root
-if [[ $EUID -eq 0 ]]; then
+if [ "$EUID" -eq 0 ]; then
    echo "Please run this script as a regular user, not as root." 
    exit 1
 fi
@@ -19,7 +19,7 @@ echo "Ensuring log directory exists at: $LOG_DIR"
 mkdir -p "$LOG_DIR"
 
 # Step 2: Create a Python virtual environment if it doesn't exist
-if [[ ! -d "$VENV_DIR" ]]; then
+if [ ! -d "$VENV_DIR" ]; then
     echo "Creating Python virtual environment at: $VENV_DIR"
     python3 -m venv "$VENV_DIR"
 else
@@ -28,7 +28,8 @@ fi
 
 # Step 3: Activate the virtual environment and upgrade pip, setuptools, and wheel
 echo "Activating the virtual environment..."
-source "$VENV_DIR/bin/activate"
+# Use "." instead of "source" for compatibility with sh
+. "$VENV_DIR/bin/activate"
 
 echo "Updating pip, setuptools, and wheel..."
 pip install --upgrade pip setuptools wheel
